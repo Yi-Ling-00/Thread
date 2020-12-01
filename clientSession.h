@@ -139,28 +139,41 @@ bool addToClientList(User *currentClient){
     return true;
 }
 
-void removeFromClientList(unsigned char clientID[], int acceptFD){
+bool removeFromClientList(User * cliToRemove){
     printf("Removing from client list!\n");
-    struct clientStruct * current = clientList;
-    struct clientStruct * prev = NULL;
 
-    if (current != NULL && memcpy(current -> clientID,clientID,MAXBUFLEN)==0){
-        clientList = current -> next;
-        free(current);
-        return;
+    //can't logout if you haven't logged in
+    if(cliToRemove -> loggedIn == false){
+        return false;
     }
 
-    while(current != NULL && memcpy(current -> clientID,clientID, MAXBUFLEN)!=0){
-        prev = current;
-        current = current -> next;
+    User * temp = clientList;//save og head 
+    User * prev = NULL;
+
+    //deleting from head
+    if(clientList -> clientFD == cliToRemove -> clientFD){
+        //remove head
+        //delete head
+        clientList = clientList -> next; //temp = second node
+        free(temp);
+        return true;   
     }
 
-    if(current == NULL) return;//never found
-    prev -> next = current -> next;
-    free(current);
-    return;
+    while (temp != NULL && cliToRemove -> clientFD != temp -> clientFD) { 
+        prev = temp; 
+        temp = temp->next; 
+    } 
+  
+    // If user was not present in user list
+    if (temp == NULL) return false; 
+  
+    // Unlink the node from linked list 
+    prev->next = temp->next; 
+  
+    // Free memory 
+    free(temp); 
+    return true;
 }
-
 
 
 
@@ -196,20 +209,31 @@ bool joinSession(char sessID[], User * client, char * reasonForFailure){
     }
    
     //already in this session
-    for(int i = 0; i < client -> nextAvailIndex; i++){
+    //for(int i = 0; i < client -> nextAvailIndex; i++){
         printf("Checking for if it's already in this session\n");
-        if(strcmp((char*)client -> sessionID[i] ,sessID)==0){
+       if(strcmp((char*)client -> currentSess ,sessID)==0){
             char whyFailed[] = "Can't join session: you are already in this session!\n";
             strcpy(reasonForFailure, whyFailed);
             return false;
         }
-    }
+    //}
 
 
     //currentSession now points to the session the user wants to join
     //add to session's clients
     //currSess should be at the right session node
-
+    //if not already present in the user's session list and not in session's user list, update
+//else just change currentSess
+    //bool updatedCurrSess = false;
+    for(int i = 0; i < client -> nextAvailIndex; i++){
+        //check if this sessID is already in the user's session list
+        if(strcmp((char*)client -> sessionID[i],sessID)==0 && memcmp(client -> sessionID[i], client -> currentSess, MAXBUFLEN)!=0){
+            memcpy(client -> currentSess, (unsigned char *)sessID, MAXBUFLEN);
+            //updatedCurrSess = true;
+            return true;
+            //break;
+        }
+    }
     //Add to the session's list of clients
     currSess -> clientsInSess[currSess -> nextAvailIndex] = client -> clientFD;
     (currSess->nextAvailIndex)++;
@@ -277,7 +301,33 @@ bool createSession(unsigned char sessID[], User *currentClient, char * reasonFor
     return true;
 }
 
+bool removeSession(Session * sessionToRemove){
+    printf("Deleting session.");
+    Session * temp = sessionList;
+    Session * prev = NULL;
 
+    if(strcmp(sessionList -> sessionID,sessionToRemove->sessionID)==0){
+        sessionList = sessionList -> next; 
+        free(temp);
+        return true;
+    }
+
+    while(temp != NULL && strcmp(sessionToRemove -> sessionID , temp -> sessionID)!=0){
+        prev= temp;
+        temp = temp -> next;
+    }
+
+    //this session isn't in session list
+    if(temp == NULL)return false;
+
+    // Unlink the node from linked list 
+    prev->next = temp->next; 
+  
+    // Free memory 
+    free(temp); 
+    return true;
+
+}
 
 bool leaveSession(char sessID[],User * client , char * reasonForFailure ){
     printf("In leave session function!\n");
@@ -308,6 +358,9 @@ bool leaveSession(char sessID[],User * client , char * reasonForFailure ){
             curr->clientsInSess[i] = -1;
             (curr->numClients)--;
             printf("Num of clients in session: %d\n", curr->numClients);
+             //if it has 0 clients, remove this session all together
+            if(curr -> numClients == 0)
+            removeSession(curr);
             break;
         }
     }
@@ -355,6 +408,46 @@ bool leaveSession(char sessID[],User * client , char * reasonForFailure ){
         }
     }
     //remove session if in client's session list
+    return true;
+}
+
+bool removeAllUsersSessions(User * current, char * reasonForFailure){//only if they are the only user in these sessions
+    unsigned char emptyElement[MAXBUFLEN] = {0x00};
+    char * whyFailed = malloc(sizeof(char));
+    for(int i = 0; i < current -> nextAvailIndex; i++){
+        
+        printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+        //printf("...checking this %s\n", current -> sessionID[i]);
+        
+        //find the sessions that the user is in the global linked list
+        Session * currentSess = sessionList; 
+        while(currentSess != NULL){
+            if(memcmp((unsigned char *)currentSess -> sessionID, current -> sessionID[i], MAXBUFLEN) ==0){
+                //found the session that the current user is in that wants to logout
+                //if(currentSess -> numClients == 1){
+                    //it's me and since I'll logout, delete this session
+                    bool left =  leaveSession((char * )current -> sessionID[i], current, whyFailed);
+                    if(left == false){
+                        strcpy(reasonForFailure, whyFailed);
+                        return false;
+                    }
+                //}
+            }
+            currentSess = currentSess -> next;
+        }
+        //if sessionID is not empty and only has me in it
+        
+
+
+        // if(memcpy(current -> sessionID[i],emptyElement, MAXBUFLEN) != 0){
+        //     printf("..this session ID is ok: %s\n", current -> sessionID[i]);
+        //     bool leftSession = leaveSession((char * )current -> sessionID[i], current, reasonForFailure);
+        //     if(leftSession != true){
+        //         printf("Can't leave this session cuz: %d\n", leftSession);
+        //     }   
+        // }
+    }
+    free(whyFailed);
     return true;
 }
 

@@ -18,8 +18,8 @@ char * emptyData = "";
 
 //                      0       1        2          3         4     5       6
 enum dataCtrlType {LOGIN_TYPE, LO_ACK, LO_NAK, EXIT_SERVER, JOIN, JN_ACK,JN_NAK, 
-LEAVE_SESS, NEW_SESS, NS_ACK, MESSAGE, QUERY, QU_ACK, LEAVE_ACK, NS_NAK, LEAVE_NAK};
-//    7         8       9       10      11      12      13         14       15
+LEAVE_SESS, NEW_SESS, NS_ACK, MESSAGE, QUERY, QU_ACK, LEAVE_ACK, NS_NAK, LEAVE_NAK, EXIT_ACK, EXIT_NAK,CLIENT_LOGOUT};
+//    7         8       9       10      11      12      13         14       15          16      17          18
 
 enum clientCommands {LOGIN, LOGOUT, JOINSESSION, LEAVESESSION, CREATESESSION, LIST, QUIT};
 
@@ -74,6 +74,8 @@ struct message makeQuitPacketAck(char * clientID){
     struct message Msg;
     Msg.size = 0;
     memcpy(Msg.source, (unsigned char *) clientID, sizeof(Msg.source));
+    memcpy(Msg.data, (unsigned char *) emptyData, sizeof(Msg.data));
+
     return Msg;
 }
 
@@ -82,11 +84,14 @@ struct message makeQuitPacketAck(char * clientID){
 struct message makeLogoutPacket(char * clientID){
     printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
     struct message Msg;
-    Msg.type = EXIT_SERVER;
+    Msg.type = CLIENT_LOGOUT;
     Msg.size = 0;
     memcpy(Msg.source, (unsigned char *) clientID, sizeof(Msg.source));
+    memcpy(Msg.data, (unsigned char *) emptyData, sizeof(Msg.data));
+
     return Msg;
 }
+
 
 
 struct message makeJoinSessPacket(char * clientID, char * sessionID){
@@ -188,7 +193,7 @@ struct message makeNsAckPacket(User * client, char * sessionID){
     printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
     struct message Msg;
     Msg.type = NS_ACK;
-    Msg.size = 0;
+    Msg.size = strlen(sessionID);
     memcpy(Msg.source, (unsigned char *) client -> clientID, sizeof(Msg.source));
     memcpy(Msg.data, (unsigned char *) sessionID, sizeof(Msg.data));
     return Msg;
@@ -198,7 +203,7 @@ struct message makeNsNakPacket(User * client, char * whyCantCreateSession){
     printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
     struct message Msg;
     Msg.type = NS_NAK;
-    Msg.size = 0;
+    Msg.size = strlen(whyCantCreateSession);
     memcpy(Msg.source, (unsigned char *) client -> clientID, sizeof(Msg.source));
     memcpy(Msg.data, (unsigned char *) whyCantCreateSession, sizeof(Msg.data));
     return Msg;
@@ -208,7 +213,7 @@ struct message makeLeaveAckPacket(User * client, unsigned char * sessionID){
     printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
     struct message Msg;
     Msg.type = LEAVE_ACK;
-    Msg.size = 0;
+    Msg.size = strlen((char *)sessionID);
     memcpy(Msg.source, (unsigned char *) client -> clientID, sizeof(Msg.source));
     memcpy(Msg.data, (unsigned char *) sessionID, sizeof(Msg.data));
     return Msg;
@@ -218,7 +223,7 @@ struct message makeLeaveNakPacket(User * client, unsigned char * sessionID){
     printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
     struct message Msg;
     Msg.type = LEAVE_NAK;
-    Msg.size = 0;
+    Msg.size = strlen((char *)sessionID);
     memcpy(Msg.source, (unsigned char *) client -> clientID, sizeof(Msg.source));
     memcpy(Msg.data, (unsigned char *) sessionID, sizeof(Msg.data));
     return Msg;
@@ -290,7 +295,7 @@ struct message makeQuAckPacket(unsigned char *clientID){
     strcat(userListArr, "\n");
     strcat(userListArr, sessionListArr);
 
-    memcpy(Msg.data, (unsigned char *)userListArr, MAXBUFLEN);
+    memcpy(Msg.data, (unsigned char *)userListArr, sizeof(Msg.data));
     printf("Msg.data: %s\n", Msg.data);
 
     memcpy(Msg.data, (char *)userListArr, sizeof(Msg.data));
@@ -298,17 +303,29 @@ struct message makeQuAckPacket(unsigned char *clientID){
     return Msg;
 }
 
-struct message makeLogoutAck(char *clientID){
+struct message makeLogoutAckPacket(unsigned char *clientID){
    struct message Msg;
+   Msg.type = EXIT_ACK;
    Msg.size = 0;
-   strcpy(Msg.data, "Logout");
+   memcpy(Msg.data, emptyData, sizeof(Msg.data));
+    memcpy(Msg.source, clientID, sizeof(Msg.source));
    return Msg;
 }
+struct message makeLogoutNakPacket(unsigned char *clientID, char * whyfailed){
+    struct message Msg;
+    Msg.type = EXIT_NAK;
+    Msg.size = strlen("Logout");
+    memcpy(Msg.data, (unsigned char *)whyfailed, sizeof(Msg.data));
+    memcpy(Msg.source, clientID, sizeof(Msg.source));
+    return Msg;
+}
+
 struct message makeQuitPacket(char *clientID){
    struct message Msg;
    Msg.type= EXIT_SERVER;
-   Msg.size = 0;
-   strcpy(Msg.data, "Quit");
+   Msg.size = strlen("Quit");
+   memcpy(Msg.data, "Quit", sizeof(Msg.data));
+    memcpy(Msg.source, (unsigned char *) clientID, sizeof(Msg.source));
    return Msg;
 }
 

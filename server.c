@@ -1,6 +1,6 @@
 #include "clientSession.h"
 #include "packet.h" 
- 
+  
 #define BACKLOG 20 
 bool message=false;
 int numUserConnected=0;
@@ -13,7 +13,7 @@ pthread_mutex_t numUserConnected_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct message processPacket(struct message incomingPacket, User *current){
     printf("\n\nEnterring process packet, client looks like:\n");
     printClientStruct(current);
-
+    bool removed;
     struct message packetToSend;
     //process the packet 
     //1. look at the packet type
@@ -61,14 +61,44 @@ struct message processPacket(struct message incomingPacket, User *current){
             printf("It's a quit!\n");
             //printf("It's a logout!\n");
             pthread_mutex_lock(&userList_mutex);
-            removeFromClientList((unsigned char *)incomingPacket.source, current->clientFD);
+            removed = removeFromClientList(current);
             pthread_mutex_unlock(&userList_mutex);
             message=false;
             current->quit=true;
             packetToSend= makeQuitPacketAck(current->clientID);
             
         break;
-
+          case 18:
+            printf("It's a logout!\n");
+            //remove all sessions in this client
+                //call leave session within
+            if(current -> loggedIn == false){
+                makeLogoutNakPacket(current -> clientID, "You're not even logged in");
+            }
+            char * whyFailed = malloc(sizeof(char));
+            removeAllUsersSessions(current,whyFailed);
+            printf("Removed all sessions\n");
+            removed = removeFromClientList(current);
+            current -> loggedIn = false;
+            if(removed){
+                packetToSend = makeLogoutAckPacket(current->clientID);
+            }else{
+                packetToSend = makeLogoutNakPacket(current->clientID, whyFailed);
+            }
+            free(whyFailed);
+            // if(memcmp(incomingPacket.data, "Quit", MAXBUFLEN)==0){
+            //     printf("Server: It's a quit!\n");
+            //     message=false;
+            //     //return packetToSend= makeQuitPacketAck(current->clientID);
+            //     close(current->clientFD);
+            //     exit(EXIT_SUCCESS);
+            //    //return;
+            // }
+            // else{
+            //     packetToSend= makeLogoutAck((char * )current->clientID);
+            //     message=false;
+            // }
+            break;
         case 4: //Joinsession
             printf("Joining session!\n");
             //joining
@@ -135,31 +165,38 @@ struct message processPacket(struct message incomingPacket, User *current){
             break;
 
         case 10: //message 
-            message= true;
-            printf("Send message!\n");
-            packetToSend = makeMessagePacket((char *)current->clientID, (char *) incomingPacket.data);
+            //unsigned char emptyUnsignedChar[MAXBUFLEN] = {};
+            //memset(emptyUnsignedChar, 0, sizeof(emptyUnsignedChar));
+            if(memcmp(current -> currentSess, "",MAXBUFLEN)!=0){
+                message= true;
+                printf("Send message!\n");
+                packetToSend = makeMessagePacket((char *)current->clientID, (char *) incomingPacket.data);
+                
+                //find that session 
+                Session *tempSess= sessionList;
+                while(tempSess!=NULL){
+                    struct message * ptrToPacketToSend;
+                    if(memcmp((unsigned char *)tempSess->sessionID, current->currentSess, MAXBUFLEN)==0){
+                        printf("Find session!\n");
+                        // User *tempUser= tempSess->clientsInSession;
+                        // while(tempUser!=NULL){
+                        for(int i = 0; i < tempSess -> nextAvailIndex; i++){
+                            ptrToPacketToSend = &packetToSend;
+                            if(tempSess -> clientsInSess[i]!=-1){
+                                int sendBytes = write(tempSess -> clientsInSess[i], ptrToPacketToSend, sizeof(struct message));
+                            }
+                        } 
+                        break;
+                    }else{
+                        tempSess= tempSess->next;
+                    }
+                }       
+            }else{
+                printf("You're not in session");
+            }
             
-            //find that session 
-            Session *tempSess= sessionList;
-            while(tempSess!=NULL){
-                struct message * ptrToPacketToSend;
-                if(memcmp((unsigned char *)tempSess->sessionID, current->currentSess, MAXBUFLEN)==0){
-                    printf("Find session!\n");
-                    // User *tempUser= tempSess->clientsInSession;
-                    // while(tempUser!=NULL){
-                    for(int i = 0; i < tempSess -> nextAvailIndex; i++){
-                        ptrToPacketToSend = &packetToSend;
-                        if(tempSess -> clientsInSess[i]!=-1){
-                            int sendBytes = write(tempSess -> clientsInSess[i], ptrToPacketToSend, sizeof(struct message));
-                        }
-                    } 
-                    break;
-                }else{
-                    tempSess= tempSess->next;
-                }
-            }       
-            printf("Error on case 10 in server!\n");
-        break;
+            //printf("Error on case 10 in server!\n");
+            break;
         case 11: //list
             printf("List!\n"); 
             packetToSend = makeQuAckPacket(current->clientID);
