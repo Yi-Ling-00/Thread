@@ -122,6 +122,7 @@ int main(int argc, char *argv[]){
         char input[1000],singleWordCommands[1000];
         char fwOfCommand[15], excess[1000];
         enum clientCommands fwEnum; 
+
         fgets (input, 1000, stdin);
         printf("input: %s\n", input);
         
@@ -268,22 +269,36 @@ int main(int argc, char *argv[]){
 
             case 7:
                 printf("Sending invite!\n");
-                char *inviteClientID, *inviteSessionID;
-                if (input[strlen(input)-1] == '\n')  input[strlen(input)-1] = '\0';
-                const char s[2]= " ";
-                char *token;
-                token = strtok(input, s);
-                printf( " %s\n", token );
-                token = strtok(NULL, s);
-                printf( " %s\n", token );
-                inviteClientID=token;
-                token = strtok(NULL, s);
-                printf( " %s\n", token ); 
-                inviteSessionID= token;
-                printf("inviteClientID: %s\t", inviteClientID);
-                printf("inviteSessionID: %s\t", inviteSessionID);
-                packetToSend = makeInvitePacket(clientIDStr, inviteClientID, inviteSessionID);    
+                //char *inviteClientID, *inviteSessionID;
+                //if (input[strlen(input)-1] == '\n')  input[strlen(input)-1] = '\0';
+                //const char s[2]= " ";
+                char sessionToJoin[1000];
+                char personToInvite[1000];
+                char inviteStr[7];
+
+                sscanf(input, "%s %s %s", inviteStr, personToInvite, sessionToJoin);
+                printf("invite: %s\n", inviteStr);
+                printf("person to invite: %s\n",personToInvite);
+                printf("session to invite: %s\n",sessionToJoin);
+
+                
+                // char *token;
+                // token = strtok(input, s);
+                // printf( " %s\n", token );
+                // token = strtok(NULL, s);
+                // printf( " %s\n", token );
+                // strcpy(inviteClientID,token);
+                // //inviteClientID=token;
+                // token = strtok(NULL, s);
+                // printf( " %s\n", token ); 
+                // inviteSessionID= token;
+                // printf("inviteClientID: %s\t", inviteClientID);
+                // printf("inviteSessionID: %s\t", inviteSessionID);
+                packetToSend = makeInvitePacket(clientIDStr, personToInvite, sessionToJoin); 
+                
                 ptrToPacketToSend = &packetToSend;
+                printf("INVIDE PACKET: \n");
+                printPacket(ptrToPacketToSend);   
 
             break;
             default:

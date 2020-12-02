@@ -42,6 +42,38 @@
 
 bool firstClient = true;
 
+
+typedef struct clientStruct{
+    int clientFD;
+    unsigned char clientID[MAXBUFLEN];
+    char pw[MAXBUFLEN];
+    bool loggedIn;
+    //currentSess will be the last joinsession's session
+    unsigned char currentSess[MAXBUFLEN];
+    unsigned char sessionID[MAX_ARR_SIZE][MAXBUFLEN];
+    int nextAvailIndex;
+    pthread_t tid;
+    bool quit;
+    struct clientStruct * next;
+}User;
+
+typedef struct session{
+    char sessionID[MAXBUFLEN];
+    //User * clientsInSession;
+    int numClients;
+    int clientsInSess[MAX_ARR_SIZE];    //store the acceptFD's
+    int nextAvailIndex;
+    struct session *next;
+}Session;
+
+
+//global client and session lists
+User * clientList = NULL; //head
+User * lastClient = NULL;
+
+Session *sessionList = NULL;
+Session *lastSession = NULL;
+
 /*
 ./server 3030
 ./deliver

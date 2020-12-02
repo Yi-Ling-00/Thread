@@ -18,8 +18,8 @@ char * emptyData = "";
 
 //                      0       1        2          3         4     5       6
 enum dataCtrlType {LOGIN_TYPE, LO_ACK, LO_NAK, EXIT_SERVER, JOIN, JN_ACK,JN_NAK, 
-LEAVE_SESS, NEW_SESS, NS_ACK, MESSAGE, QUERY, QU_ACK, LEAVE_ACK, NS_NAK, LEAVE_NAK, EXIT_ACK, EXIT_NAK,CLIENT_LOGOUT, INVITATION, INVITE_ACK};
-//    7         8       9       10      11      12      13         14       15          16      17          18          19       20
+LEAVE_SESS, NEW_SESS, NS_ACK, MESSAGE, QUERY, QU_ACK, LEAVE_ACK, NS_NAK, LEAVE_NAK, EXIT_ACK, EXIT_NAK,CLIENT_LOGOUT, INVITATION, INVITE_ACK, INVITE_NAK};
+//    7         8       9       10      11      12      13         14       15         16      17          18          19         20                21
 
 enum clientCommands {LOGIN, LOGOUT, JOINSESSION, LEAVESESSION, CREATESESSION, LIST, QUIT, INVITE};
 
@@ -69,7 +69,7 @@ struct message makeLoginPacket(char * clientID, char * pw){
     return Msg;
 }
 
-struct message makeQuitPacketAck(char * clientID){
+struct message makeQuitPacketAck(unsigned char * clientID){
     printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
     printf("Quit packet\n");
     struct message Msg;
@@ -120,43 +120,44 @@ struct message makeInvitePacket(char *clientID, char *inviteID,  char * sessionI
     printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
     int inviteFD;
     struct message Msg;
+    // char serverIP[20], serverPortNum[40];
+    unsigned char ucPacketData[MAXBUFLEN],ucClientID[MAX_NAME];
+    // sscanf(str, "%s %s %s %s", clientID, pw, serverIP, serverPortNum);
+
+    char packetData[MAXBUFLEN] = {'\0'};
+    strcat(packetData, inviteID);
+    strcat(packetData, ",");
+    strcat(packetData, sessionID);
+    printf("invite packet data: %s\n",packetData);
+    
     Msg.type = INVITATION;
-    Msg.size = strlen((char *)sessionID);
-    // User *tempClient= clientList;
-    // if (tempClient==NULL) printf("Client list empty\n");
-    // printf("INVITE ID: %s\n", inviteID);
-    // while(tempClient!=NULL){
-    //     if(strcmp(tempClient->clientID, inviteID)==0){
-    //         printf("User exist!\n");
-    //         inviteFD= tempClient->clientFD;
-    //         break;
-    //     }
-    //     tempClient = tempClient -> next;
-      
-    // }
-    // if(tempClient==NULL) {
-    //     printf("User not found!\n");
-    //     inviteFD= -1;
-    // }
+    Msg.size = strlen((char *)packetData);
 
+    strcpy((char *)ucPacketData,packetData);
+    strcpy((char *)ucClientID,clientID);
 
-
-
-    inviteFD = returnInviteFD(inviteID);
-    memcpy(Msg.source, (unsigned char *) clientID, sizeof(Msg.source));
-    sprintf(Msg.data, "%d:%s", inviteFD, sessionID);
-    printf("%s said: Please join sesion %s!\n",clientID,  sessionID);
+    memcpy(Msg.source, (unsigned char *) ucClientID, sizeof(Msg.source));
+    memcpy(Msg.data, (unsigned char *) ucPacketData, sizeof(Msg.data));
     return Msg;
 }
 
-struct message makeInvitePacketAck(char *clientID, int tempFD){
+struct message makeInviteAckPacket(User * client, struct message incomingPacket, char * sessionToJoin){
     printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
     struct message Msg;
     Msg.type = INVITE_ACK;
-    memcpy(Msg.source, (unsigned char *) clientID, sizeof(Msg.source));
-    if (tempFD==-1)  sprintf(Msg.data, "Invalid User!\n",clientID);
-    else sprintf(Msg.data, "Packet Sent!\n",clientID);
+    memcpy(Msg.source, (unsigned char *) client->clientID, sizeof(Msg.source));
+    memcpy(Msg.data, (unsigned char *) sessionToJoin, sizeof(Msg.source));
     Msg.size = strlen((char *)Msg.data);
+    return Msg;
+}
+
+struct message makeInviteNakPacket(User * client, char * reasonFailed){
+    printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+    struct message Msg;
+    Msg.type = INVITE_NAK;
+    Msg.size = strlen((char * )reasonFailed);
+    memcpy(Msg.source, (unsigned char *) client -> clientID, sizeof(Msg.source));
+    memcpy(Msg.data, (unsigned char *) reasonFailed, sizeof(Msg.data));
     return Msg;
 }
 
