@@ -452,4 +452,5 @@ bool removeAllUsersSessions(User * current, char * reasonForFailure){//only if t
 }
 
 
+
 #endif

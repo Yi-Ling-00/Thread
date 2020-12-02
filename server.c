@@ -86,6 +86,7 @@ struct message processPacket(struct message incomingPacket, User *current){
                 packetToSend = makeLogoutNakPacket(current->clientID, whyFailed);
             }
             free(whyFailed);
+            firstClient = true;
             // if(memcmp(incomingPacket.data, "Quit", MAXBUFLEN)==0){
             //     printf("Server: It's a quit!\n");
             //     message=false;

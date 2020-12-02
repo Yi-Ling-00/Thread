@@ -78,6 +78,7 @@ void *receiveMessage(){
         case 16:
             printf("EXIT_ACK: Successful exit\n");
             inSession = false;//if you've logged out, you're obvsly not in session anymore
+            
             break;
         case 17:
             printf("EXIT_NAK: Unsuccessful exit, reason: %s\n", serverPacket -> data);
@@ -228,6 +229,7 @@ int main(int argc, char *argv[]){
                 sscanf(input, "%s %s", leaveSession, leaveSessionID);
                 packetToSend = makeLeaveSessPacket(clientIDStr, leaveSessionID);
                 ptrToPacketToSend = &packetToSend;
+                iveLoggedIn = false;
 
                 break;
 
