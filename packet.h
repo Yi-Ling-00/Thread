@@ -141,13 +141,24 @@ struct message makeInvitePacket(char *clientID, char *inviteID,  char * sessionI
     return Msg;
 }
 
-struct message makeInviteAckPacket(User * client, struct message incomingPacket, char * sessionToJoin){
+struct message makeInviteAckPacket(char * clientID, struct message incomingPacket, char * sessionToJoin, char * whoToJoin){
     printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
     struct message Msg;
+    char packetData[MAXBUFLEN] = {'\0'};
+    unsigned char ucPacketData[MAXBUFLEN],ucClientID[MAX_NAME];
+    strcat(packetData, whoToJoin);
+    strcat(packetData, ",");
+    strcat(packetData, sessionToJoin);
+
     Msg.type = INVITE_ACK;
-    memcpy(Msg.source, (unsigned char *) client->clientID, sizeof(Msg.source));
-    memcpy(Msg.data, (unsigned char *) sessionToJoin, sizeof(Msg.source));
     Msg.size = strlen((char *)Msg.data);
+    
+    strcpy((char *)ucPacketData,packetData);
+    strcpy((char *)ucClientID,clientID);
+
+    memcpy(Msg.source, (unsigned char *) ucClientID, sizeof(Msg.source));
+    memcpy(Msg.data, (unsigned char *) ucPacketData, sizeof(Msg.data));
+
     return Msg;
 }
 
@@ -160,6 +171,7 @@ struct message makeInviteNakPacket(User * client, char * reasonFailed){
     memcpy(Msg.data, (unsigned char *) reasonFailed, sizeof(Msg.data));
     return Msg;
 }
+
 
 
 

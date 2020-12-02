@@ -44,6 +44,10 @@ void *receiveMessage(){
     //serverPacket= NULL;
     //bool one=true;
 
+    char sessionIDInvite[MAXBUFLEN], person[MAXBUFLEN];
+    char * packetData = (char * )serverPacket -> data;
+    char * token;
+
     while(1){
         
         numBytes= read(sockfd, ( void *)serverPacket, sizeof(struct message));
@@ -63,6 +67,9 @@ void *receiveMessage(){
             printf("NS_ACK: Successful new session\n");
             inSession=true;
             break;
+         case 10:
+                printf("MESSAGE: The message sent to the session is: %s\n",serverPacket->data);
+                break;
         case 12: 
             printf("QU_ACK: Users and sessions: %s\n", serverPacket->data);
             break;
@@ -83,6 +90,19 @@ void *receiveMessage(){
         case 17:
             printf("EXIT_NAK: Unsuccessful exit, reason: %s\n", serverPacket -> data);
             break;
+        case 20:
+                token = strtok(packetData, ",");
+                strcpy(person, token );
+                /* walk through other tokens */
+                while( token != NULL ) {
+                    strcpy(sessionIDInvite, token);
+                    token = strtok(NULL, ",");
+                }
+                printf("%s invites %s to join session: %s\n",(char *) serverPacket -> source, person, sessionIDInvite);
+                break;
+        case 21:
+            printf("INVITE_NAK: Unsuccessful invite, reason: %s\n", serverPacket -> data);
+        break;
         default:
             printf("\n\n\n----------Unknown packet received!--------\n");
             break;  
