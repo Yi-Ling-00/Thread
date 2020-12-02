@@ -169,10 +169,8 @@ bool removeFromClientList(User * cliToRemove){
     if(cliToRemove -> loggedIn == false){
         return false;
     }
-
     User * temp = clientList;//save og head 
     User * prev = NULL;
-
     //deleting from head
     if(clientList -> clientFD == cliToRemove -> clientFD){
         //remove head
@@ -186,13 +184,11 @@ bool removeFromClientList(User * cliToRemove){
         prev = temp; 
         temp = temp->next; 
     } 
-  
+    
     // If user was not present in user list
     if (temp == NULL) return false; 
-  
     // Unlink the node from linked list 
     prev->next = temp->next; 
-  
     // Free memory 
     free(temp); 
     return true;

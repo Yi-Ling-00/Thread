@@ -4,7 +4,7 @@
 #define BACKLOG 20 
 bool message=false;
 int numUserConnected=0;
-
+int cancelThreadID;
 pthread_mutex_t sessionList_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t userList_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t numUserConnected_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -59,14 +59,25 @@ struct message processPacket(struct message incomingPacket, User *current){
 
         case 3:
             printf("It's a quit!\n");
+            int clientFDTemp= current->clientFD;
+            char tempClientID[100];
             //printf("It's a logout!\n");
+            
+            strcpy(tempClientID,current->clientID);
+
+            tempClientID[strlen(current->clientID)]='\0';
+               
+            printf("tempClientID: %s\n", tempClientID);
             pthread_mutex_lock(&userList_mutex);
             removed = removeFromClientList(current);
             pthread_mutex_unlock(&userList_mutex);
+            pthread_mutex_lock(&numUserConnected_mutex);
+            numUserConnected--;
+            pthread_mutex_lock(&numUserConnected_mutex);
             message=false;
-            current->quit=true;
-            packetToSend= makeQuitPacketAck(current->clientID);
-            
+            packetToSend.type=-9;
+            close(clientFDTemp);
+            return packetToSend;
         break;
           case 18:
             printf("It's a logout!\n");
@@ -88,18 +99,6 @@ struct message processPacket(struct message incomingPacket, User *current){
             free(whyFailed);
             firstClient = true;
             message= false;
-            // if(memcmp(incomingPacket.data, "Quit", MAXBUFLEN)==0){
-            //     printf("Server: It's a quit!\n");
-            //     message=false;
-            //     //return packetToSend= makeQuitPacketAck(current->clientID);
-            //     close(current->clientFD);
-            //     exit(EXIT_SUCCESS);
-            //    //return;
-            // }
-            // else{
-            //     packetToSend= makeLogoutAck((char * )current->clientID);
-            //     message=false;
-            // }
             break;
         case 4: //Joinsession
             printf("Joining session!\n");
@@ -292,17 +291,20 @@ void *handle(void *tempUser){
                 printPacket(&packetToSend);
 
                 ptrToPacketToSend = &packetToSend;
-                
+                if(packetToSend.type==-9) {
+                    printf("DONT SEND AN ACK ITS A QUIT!\n");
+                    pthread_exit(&cancelThreadID);
+                }
                 if(!message){
                 int sendBytes = write(newUser->clientFD, ptrToPacketToSend, sizeof(struct message));
                 printf("sendBytes: %d\n", sendBytes);
                    if (sendBytes==-1)  printf("------------Sent!-----------------\n");
                 }
-                if(newUser->quit==true){
-                    printf("User wants to exit server!\n");
-                    newUser->clientFD = -1;
-                    close(newUser->clientFD);
-                }
+                // if(newUser->quit!=true){
+                //     printf("User wants to exit server!\n");
+                //     newUser->clientFD = -1;
+                //     close(newUser->clientFD);
+                // }
                 //clean up for next round
                 free(incomingPacket);
                 incomingPacket = NULL;
