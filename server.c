@@ -87,6 +87,7 @@ struct message processPacket(struct message incomingPacket, User *current){
             }
             free(whyFailed);
             firstClient = true;
+            message= false;
             // if(memcmp(incomingPacket.data, "Quit", MAXBUFLEN)==0){
             //     printf("Server: It's a quit!\n");
             //     message=false;
@@ -212,9 +213,34 @@ struct message processPacket(struct message incomingPacket, User *current){
             packetToSend = makeQuAckPacket(current->clientID);
             message=false;
             break;
+        case 19://Invite
+            printf("Invite!\n");
+            struct message sendInvite;
+            struct message * ptrToSendInvite;
+             char *inviteClientFD, *inviteSessionID;
+                char *token= strtok(incomingPacket.data, " ");
+                strcpy(inviteClientFD, token);
+                token= strtok(NULL, " ");
+                strcpy(inviteSessionID, token);
+                printf("inviteClientID: %s\t", inviteClientFD);
+                printf("inviteSessionID: %s\t", inviteSessionID);
+                int tempFD= atoi(inviteClientFD);
+                //check if Client exist, if yes, get their fd
+            if (tempFD==-1){
+                printf("User not found!\n");
+            }
+            else{
+            printf("Writing to the other person......\n");
+            sprintf(sendInvite.data, "Client ID: %s sent you an invite to join session : %s", current->clientID, inviteSessionID);
+            int sendBytes = write(tempFD, ptrToSendInvite, sizeof(struct message));
+           
+            }
+             packetToSend = makeInvitePacketAck(current->clientID, tempFD);
+            message=false;
+        break;
         default:  
-        message=false;
-            break;
+            message=false;
+        break;
 
         
     }

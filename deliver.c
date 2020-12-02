@@ -125,6 +125,7 @@ int main(int argc, char *argv[]){
         fgets (input, 1000, stdin);
         printf("input: %s\n", input);
 
+        char *stuff    
         //send the message directly to server.
         //take out the first word of input to decide what to do with it
          
@@ -264,9 +265,23 @@ int main(int argc, char *argv[]){
             //close(sockfd);
             break;
 
+            case 7:
+            
+                printf("Sending invite!\n");
+                printf("Excess: %s\t", excess);
+                char *inviteClientID, inviteSessionID;
+                char *token= strtok(excess, " ");
+                strcpy(inviteClientID, token);
+                token= strtok(NULL, " ");
+                strcpy(inviteSessionID, token);
+                printf("inviteClientID: %s\t", inviteClientID);
+                printf("inviteSessionID: %s\t", inviteSessionID);
+                packetToSend = makeInvitePacket(clientIDStr, inviteClientID, inviteSessionID);    
+                ptrToPacketToSend = &packetToSend;
+
+            break;
             default:
-                printf("Invalid command\n");
-                printf("In default case!\n");  
+                
                 //if loggedIn == true && currSess not empty: it's a message  
                 if(inSession){
                     //printf("In session !\n");

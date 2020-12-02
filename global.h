@@ -29,6 +29,7 @@
 // /leavesession ECE361 
 // /leavesession ECE334 
 // /leavesession ECE361 
+// /invite Emily ECE361
 // /list
 // /quit
 #define DATA_SIZE 1000

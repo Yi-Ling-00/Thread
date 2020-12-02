@@ -42,6 +42,19 @@ void printIntArrar(int arr[], int size){
     return;
 }
 
+int  returnInviteFD(char *inviteID){
+   User *temp =  clientList;
+    while(temp!=NULL){
+
+        if(strcmp((const char *) inviteID,(const char *)temp->clientID)==0){
+            printf("Valid User ID\n");
+            return temp->clientFD;
+        }
+        temp= temp->next;
+    }
+    if(temp==NULL) return -1;
+}
+
 void printClientStruct(User *currentClient){
     printf("clientFD: %d\n", currentClient -> clientFD);
     printf("clientID: %s\n", currentClient -> clientID);

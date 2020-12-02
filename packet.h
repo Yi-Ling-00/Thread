@@ -18,10 +18,10 @@ char * emptyData = "";
 
 //                      0       1        2          3         4     5       6
 enum dataCtrlType {LOGIN_TYPE, LO_ACK, LO_NAK, EXIT_SERVER, JOIN, JN_ACK,JN_NAK, 
-LEAVE_SESS, NEW_SESS, NS_ACK, MESSAGE, QUERY, QU_ACK, LEAVE_ACK, NS_NAK, LEAVE_NAK, EXIT_ACK, EXIT_NAK,CLIENT_LOGOUT};
-//    7         8       9       10      11      12      13         14       15          16      17          18
+LEAVE_SESS, NEW_SESS, NS_ACK, MESSAGE, QUERY, QU_ACK, LEAVE_ACK, NS_NAK, LEAVE_NAK, EXIT_ACK, EXIT_NAK,CLIENT_LOGOUT, INVITATION, INVITE_ACK};
+//    7         8       9       10      11      12      13         14       15          16      17          18          19       20
 
-enum clientCommands {LOGIN, LOGOUT, JOINSESSION, LEAVESESSION, CREATESESSION, LIST, QUIT};
+enum clientCommands {LOGIN, LOGOUT, JOINSESSION, LEAVESESSION, CREATESESSION, LIST, QUIT, INVITE};
 
 enum clientCommands convertToEnum(char * str){
     if(strcmp(str,"login")==0) return LOGIN;
@@ -31,6 +31,7 @@ enum clientCommands convertToEnum(char * str){
     if(strcmp(str,"createsession")==0) return CREATESESSION;
     if(strcmp(str,"list")==0) return LIST;
     if(strcmp(str,"quit")==0) return QUIT;
+    if(strcmp(str, "invite")==0) return INVITE;
     else return -1;
 }
 
@@ -114,6 +115,30 @@ struct message makeLeaveSessPacket(char *clientID, char * sessionID){
    // strcpy(Msg.data," ",sizeof(Msg.data) );
     return Msg;
 }
+
+struct message makeInvitePacket(char *clientID, char *inviteID,  char * sessionID){
+    printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+    struct message Msg;
+    Msg.type = INVITATION;
+    Msg.size = strlen((char *)sessionID);
+    int inviteFD = returnInviteFD(inviteID);
+    memcpy(Msg.source, (unsigned char *) clientID, sizeof(Msg.source));
+    sprintf(Msg.data, "%d:%s", inviteFD, sessionID);
+    printf("%s said: Please join sesion %s!\n",clientID,  sessionID);
+    return Msg;
+}
+
+struct message makeInvitePacketAck(char *clientID, int tempFD){
+    printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+    struct message Msg;
+    Msg.type = INVITE_ACK;
+    memcpy(Msg.source, (unsigned char *) clientID, sizeof(Msg.source));
+    if (tempFD==-1)  sprintf(Msg.data, "Invalid User!\n",clientID);
+    else sprintf(Msg.data, "Packet Sent!\n",clientID);
+    Msg.size = strlen((char *)Msg.data);
+    return Msg;
+}
+
 
 
 struct message makeCreateSessPacket(char *clientID, char * sessionID){
