@@ -172,19 +172,29 @@ struct message processPacket(struct message incomingPacket, User *current){
                 message= true;
                 printf("Send message!\n");
                 packetToSend = makeMessagePacket((char *)current->clientID, (char *) incomingPacket.data);
-                
+                printf("99999999999\n");
                 //find that session 
                 Session *tempSess= sessionList;
+                 printf("GGGGGGGGGGGGGGGGG\n");
                 while(tempSess!=NULL){
                     struct message * ptrToPacketToSend;
-                    if(memcmp((unsigned char *)tempSess->sessionID, current->currentSess, MAXBUFLEN)==0){
+                     printf("DDDDDDDDDDDD\n");
+                     printf("Client's sessipn ID: %s\n", current->currentSess);
+                     printf("Temp sess ID: %s\n", tempSess->sessionID);
+                     printf("String compare: %d\n", strcmp(current->currentSess, tempSess->sessionID));
+                     if(strcmp(current->currentSess, tempSess->sessionID)==0){
+                         printf("They are the same!\n");
+                        printf("--------------111-----------\n");
                         printf("Find session!\n");
                         // User *tempUser= tempSess->clientsInSession;
                         // while(tempUser!=NULL){
                         for(int i = 0; i < tempSess -> nextAvailIndex; i++){
                             ptrToPacketToSend = &packetToSend;
+                            printf("--------------zzz-----------\n");
                             if(tempSess -> clientsInSess[i]!=-1){
+                                printf("--------------***-----------\n");
                                 int sendBytes = write(tempSess -> clientsInSess[i], ptrToPacketToSend, sizeof(struct message));
+                                printf("sendBytes: %d\n", sendBytes);
                             }
                         } 
                         break;
@@ -196,7 +206,6 @@ struct message processPacket(struct message incomingPacket, User *current){
                 printf("You're not in session");
             }
             
-            //printf("Error on case 10 in server!\n");
             break;
         case 11: //list
             printf("List!\n"); 
@@ -257,6 +266,8 @@ void *handle(void *tempUser){
                 
                 if(!message){
                 int sendBytes = write(newUser->clientFD, ptrToPacketToSend, sizeof(struct message));
+                printf("sendBytes: %d\n", sendBytes);
+                   if (sendBytes==-1)  printf("------------Sent!-----------------\n");
                 }
                 if(newUser->quit==true){
                     printf("User wants to exit server!\n");

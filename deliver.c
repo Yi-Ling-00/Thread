@@ -46,8 +46,8 @@ void *receiveMessage(){
 
     while(1){
         
-        read(sockfd, ( void *)serverPacket, sizeof(struct message));
-            
+        numBytes= read(sockfd, ( void *)serverPacket, sizeof(struct message));
+            printf("Deliver numbytes line 50: %d\n", numBytes);
 
         printPacket(serverPacket);
 
