@@ -118,10 +118,31 @@ struct message makeLeaveSessPacket(char *clientID, char * sessionID){
 
 struct message makeInvitePacket(char *clientID, char *inviteID,  char * sessionID){
     printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+    int inviteFD;
     struct message Msg;
     Msg.type = INVITATION;
     Msg.size = strlen((char *)sessionID);
-    int inviteFD = returnInviteFD(inviteID);
+    // User *tempClient= clientList;
+    // if (tempClient==NULL) printf("Client list empty\n");
+    // printf("INVITE ID: %s\n", inviteID);
+    // while(tempClient!=NULL){
+    //     if(strcmp(tempClient->clientID, inviteID)==0){
+    //         printf("User exist!\n");
+    //         inviteFD= tempClient->clientFD;
+    //         break;
+    //     }
+    //     tempClient = tempClient -> next;
+      
+    // }
+    // if(tempClient==NULL) {
+    //     printf("User not found!\n");
+    //     inviteFD= -1;
+    // }
+
+
+
+
+    inviteFD = returnInviteFD(inviteID);
     memcpy(Msg.source, (unsigned char *) clientID, sizeof(Msg.source));
     sprintf(Msg.data, "%d:%s", inviteFD, sessionID);
     printf("%s said: Please join sesion %s!\n",clientID,  sessionID);

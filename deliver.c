@@ -124,8 +124,7 @@ int main(int argc, char *argv[]){
         enum clientCommands fwEnum; 
         fgets (input, 1000, stdin);
         printf("input: %s\n", input);
-
-        char *stuff    
+        
         //send the message directly to server.
         //take out the first word of input to decide what to do with it
          
@@ -134,6 +133,8 @@ int main(int argc, char *argv[]){
 
         printf("Excess: %s\n", excess);
         fwEnum = convertToEnum(fwOfCommand);
+
+
         /*
         if(strcmp(excess, "")==0){
             //no second work, just take input with / removed
@@ -266,14 +267,19 @@ int main(int argc, char *argv[]){
             break;
 
             case 7:
-            
                 printf("Sending invite!\n");
-                printf("Excess: %s\t", excess);
-                char *inviteClientID, inviteSessionID;
-                char *token= strtok(excess, " ");
-                strcpy(inviteClientID, token);
-                token= strtok(NULL, " ");
-                strcpy(inviteSessionID, token);
+                char *inviteClientID, *inviteSessionID;
+                if (input[strlen(input)-1] == '\n')  input[strlen(input)-1] = '\0';
+                const char s[2]= " ";
+                char *token;
+                token = strtok(input, s);
+                printf( " %s\n", token );
+                token = strtok(NULL, s);
+                printf( " %s\n", token );
+                inviteClientID=token;
+                token = strtok(NULL, s);
+                printf( " %s\n", token ); 
+                inviteSessionID= token;
                 printf("inviteClientID: %s\t", inviteClientID);
                 printf("inviteSessionID: %s\t", inviteSessionID);
                 packetToSend = makeInvitePacket(clientIDStr, inviteClientID, inviteSessionID);    

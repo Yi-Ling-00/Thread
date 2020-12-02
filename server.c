@@ -218,10 +218,13 @@ struct message processPacket(struct message incomingPacket, User *current){
             struct message sendInvite;
             struct message * ptrToSendInvite;
              char *inviteClientFD, *inviteSessionID;
+                printf("Incoming data: %s\n", incomingPacket.data);
                 char *token= strtok(incomingPacket.data, " ");
-                strcpy(inviteClientFD, token);
+                printf("Token: %s\n", token);
+                inviteClientFD= token;
                 token= strtok(NULL, " ");
-                strcpy(inviteSessionID, token);
+                printf("Token: %s\n", token);
+                inviteSessionID= token;
                 printf("inviteClientID: %s\t", inviteClientFD);
                 printf("inviteSessionID: %s\t", inviteSessionID);
                 int tempFD= atoi(inviteClientFD);

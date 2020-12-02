@@ -43,16 +43,26 @@ void printIntArrar(int arr[], int size){
 }
 
 int  returnInviteFD(char *inviteID){
-   User *temp =  clientList;
-    while(temp!=NULL){
-
-        if(strcmp((const char *) inviteID,(const char *)temp->clientID)==0){
-            printf("Valid User ID\n");
-            return temp->clientFD;
+    int inviteFD;
+    printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+    printf("Invite ID: %s\n", inviteID);
+     User *tempClient= clientList;
+    if (tempClient==NULL) printf("Client list empty\n");
+    printf("INVITE ID: %s\n", inviteID);
+    while(tempClient!=NULL){
+        if(strcmp(tempClient->clientID, inviteID)==0){
+            printf("User exist!\n");
+            inviteFD= tempClient->clientFD;
+            break;
         }
-        temp= temp->next;
+        tempClient = tempClient -> next;
+      
     }
-    if(temp==NULL) return -1;
+    if(tempClient==NULL) {
+        printf("User not found!\n");
+        inviteFD= -1;
+    }
+    return inviteFD;
 }
 
 void printClientStruct(User *currentClient){
