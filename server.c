@@ -11,13 +11,13 @@ pthread_mutex_t numUserConnected_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 struct message processPacket(struct message incomingPacket, User *current){
-    printf("\n\nEnterring process packet, client looks like:\n");
-    printClientStruct(current);
+    //printf("\n\nEnterring process packet, client looks like:\n");
+    //printClientStruct(current);
     bool removed;
     struct message packetToSend;
     //process the packet 
     //1. look at the packet type
-     bool addSuccess=false;
+    bool addSuccess=false;
     char * whyFailed = malloc(MAXBUFLEN* sizeof(char));
     bool joinSuccess=false;
     bool leaveSuccess = false;
@@ -38,7 +38,7 @@ struct message processPacket(struct message incomingPacket, User *current){
             pthread_mutex_lock(&userList_mutex);
             addSuccess = addToClientList(current);
             pthread_mutex_unlock(&userList_mutex);
-            printf("^^^^^Add success : %d\n",addSuccess);
+            //printf("^^^^^Add success : %d\n",addSuccess);
 
             if (addSuccess){
                 printf("Login sucess!\n");
@@ -54,7 +54,7 @@ struct message processPacket(struct message incomingPacket, User *current){
                     strcpy(clientpw, token);
                     token = strtok(NULL, ",");
                 }
-                printf("packetdata: '%s'\n", packetData);
+                //printf("packetdata: '%s'\n", packetData);
                 strcpy(current -> pw,clientpw);
                 //do LO_ACK
                 packetToSend = makeLoAckPacket(current);
@@ -73,11 +73,11 @@ struct message processPacket(struct message incomingPacket, User *current){
             char tempClientID[100];
             //printf("It's a logout!\n");
             
-            strcpy(tempClientID,current->clientID);
+            strcpy(tempClientID,(char*)current->clientID);
 
-            tempClientID[strlen(current->clientID)]='\0';
+            tempClientID[strlen((char*) current->clientID)]='\0';
                
-            printf("tempClientID: %s\n", tempClientID);
+            //printf("tempClientID: %s\n", tempClientID);
             pthread_mutex_lock(&userList_mutex);
             removed = removeFromClientList(current);
             pthread_mutex_unlock(&userList_mutex);
@@ -88,8 +88,8 @@ struct message processPacket(struct message incomingPacket, User *current){
             packetToSend.type=-9;
             close(clientFDTemp);
             return packetToSend;
-        break;
-          case 18:
+            break;
+        case 18:
             printf("It's a logout!\n");
             //remove all sessions in this client
                 //call leave session within
@@ -98,15 +98,16 @@ struct message processPacket(struct message incomingPacket, User *current){
             }
             char * whyFailed = malloc(sizeof(char));
             removeAllUsersSessions(current,whyFailed);
-            printf("Removed all sessions\n");
+            //printf("Removed all sessions\n");
             removed = removeFromClientList(current);
             current -> loggedIn = false;
             if(removed){
                 packetToSend = makeLogoutAckPacket(current->clientID);
             }else{
                 packetToSend = makeLogoutNakPacket(current->clientID, whyFailed);
+                free(whyFailed);
+                whyFailed = NULL;
             }
-            free(whyFailed);
             firstClient = true;
             message= false;
             break;
@@ -115,7 +116,7 @@ struct message processPacket(struct message incomingPacket, User *current){
             //joining
             // joinSuccess = joinSession((char *)incomingPacket.data, current->clientFD, joinReasonForFailure, current->loggedIn); 
             joinSuccess = joinSession((char *)incomingPacket.data, current,whyFailed);
-             printf("\n&&&&   IN SERVER: %s\n", whyFailed);
+            //printf("\n&&&&   IN SERVER: %s\n", whyFailed);
             if (joinSuccess) {
                 printf("Sucessfuly joined session!\n");
                 //create Jn_ack packet
@@ -127,9 +128,11 @@ struct message processPacket(struct message incomingPacket, User *current){
                 printf("Can't join session !\n");
                  //make jn_nak packet
                 packetToSend = makeJnNakPacket(current, incomingPacket.data,whyFailed);
+                free(whyFailed);
+                whyFailed = NULL;
+
             }
             message=false;
-            free(whyFailed); 
             break;
            
         case 7: //leavesession
@@ -139,15 +142,16 @@ struct message processPacket(struct message incomingPacket, User *current){
             pthread_mutex_unlock(&sessionList_mutex);
 
             if(leaveSuccess){
-                printf("Sucessfuly left session!\n");
+                //printf("Sucessfuly left session!\n");
                 packetToSend = makeLeaveAckPacket(current, incomingPacket.data);
             }else{
-                printf("Can't leave session!\n");
+                //printf("Can't leave session!\n");
                 packetToSend = makeLeaveNakPacket(current, incomingPacket.data);
+                free(whyFailed);
+                whyFailed = NULL;
             }
             
             message=false;
-            free(whyFailed);
             break;
         case 8: //create session 
             printf("creating session!\n");
@@ -155,7 +159,7 @@ struct message processPacket(struct message incomingPacket, User *current){
             createSuccess = createSession((unsigned char *)incomingPacket.data, current, whyFailed); 
             pthread_mutex_unlock(&sessionList_mutex);
 
-            printf("createsession: %d\n",createSuccess);
+            //printf("createsession: %d\n",createSuccess);
             if(createSuccess) {
                 printf("Sucessfuly Created session!\n");
                 //create Jn_ack packet
@@ -163,8 +167,10 @@ struct message processPacket(struct message incomingPacket, User *current){
             }else{
                 printf("Unsucessful!\n");
                 packetToSend = makeNsNakPacket(current, whyFailed);
+                free(whyFailed);
+                whyFailed = NULL;
             }
-            free(whyFailed);
+            
             message=false;
             break;
 
@@ -212,19 +218,22 @@ struct message processPacket(struct message incomingPacket, User *current){
             }
             fdToSend = returnInviteFD(person,whyFailed);
             sessionValid = sessionIsValid(sessionIDInvite);
-            printf("sessionValid: %d\n", sessionValid);
+            //printf("sessionValid: %d\n", sessionValid);
             if(fdToSend == -1){
                 //invalid: nak  
                 packetToSend = makeInviteNakPacket(current, whyFailed);//send it to inviter
+                free(whyFailed);
+                whyFailed = NULL;
                 //need to send this to the client
             }else if(sessionValid != 1){
-                strcpy(whyFailed, "This session doesn't exist.\n");
+                //strcpy(whyFailed, "This session doesn't exist.\n");
                 packetToSend = makeInviteNakPacket(current, whyFailed);//send it to inviter
+                free(whyFailed);
+                whyFailed = NULL;
             }else{
                 packetToSend = makeInviteAckPacket((char*)current->clientID, incomingPacket, sessionIDInvite, person);//want to sent it to invitee
                 int inviteClientBytes = write(fdToSend, &packetToSend, sizeof(struct message));
             }
-            free(whyFailed);
             message=false;
             break;
         default:  
@@ -232,23 +241,24 @@ struct message processPacket(struct message incomingPacket, User *current){
             break;
     }
 
-    if(whyFailed == NULL)free(whyFailed);
-    printf("Exiting process packet, client looks like:\n");
+    if(whyFailed != NULL)free(whyFailed);
+    //printf("Exiting process packet, client looks like:\n");
     printClientStruct(current); 
     return packetToSend;
 }
 
 
 void *handle(void *tempUser){
-        User *newUser = malloc(sizeof(User));
-        newUser = (User *) tempUser;
+        // User *newUser = malloc(sizeof(User));
+        // newUser = (User *) tempUser;
+        User * newUser = (User *) tempUser;
         struct message * incomingPacket;
         struct message packetToSend;
         struct message * ptrToPacketToSend;
         int recvBytes;
 
             while(1){
-                printf("\n\n****************************\n");
+                //printf("\n\n****************************\n");
                 incomingPacket = (struct message * ) malloc (sizeof (struct message));
                 // printf("Before read:\n");
                 // printf("reading from: %d\n",newUser->clientFD);
@@ -275,18 +285,18 @@ void *handle(void *tempUser){
 
                 //before processing packet, fill in user info as much as possible
                 packetToSend = processPacket(*incomingPacket,newUser);
-                printf("\n###Server's gonna send:\n");
+                printf("\nServer's gonna send:\n");
                 printPacket(&packetToSend);
 
                 ptrToPacketToSend = &packetToSend;
                 if(packetToSend.type==-9) {
-                    printf("DONT SEND AN ACK ITS A QUIT!\n");
+                    //printf("DONT SEND AN ACK ITS A QUIT!\n");
                     pthread_exit(&cancelThreadID);
                 }
                 if(!message){
-                int sendBytes = write(newUser->clientFD, ptrToPacketToSend, sizeof(struct message));
-                printf("sendBytes: %d\n", sendBytes);
-                   if (sendBytes==-1)  printf("------------Sent!-----------------\n");
+                    int sendBytes = write(newUser->clientFD, ptrToPacketToSend, sizeof(struct message));
+                    //printf("sendBytes: %d\n", sendBytes);
+                    //if (sendBytes==-1)  printf("------------Sent!-----------------\n");
                 }
                 // if(newUser->quit!=true){
                 //     printf("User wants to exit server!\n");

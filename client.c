@@ -11,7 +11,7 @@ void loginMessageReceived();
 void *receiveMessage();
 
 void loginMessageReceived(){
-    printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+    //printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
     struct message * serverPacket = (struct message * ) malloc (sizeof (struct message));
 
     read(sockfd, ( void *)serverPacket, sizeof(struct message));
@@ -19,16 +19,16 @@ void loginMessageReceived(){
 
      switch(serverPacket->type){
         case 1:
-            printf("Deliver.c- LO_ACK\n ");
+            //printf("Deliver.c- LO_ACK\n ");
             if(pthread_create(&receive_thread, NULL, receiveMessage, NULL)==0) {
-            printf("LO_ACK: Successful login!\n");
+                printf("LO_ACK: Successful login!\n");
             }
             break;
         case 2:
             printf("LO_NAK: Unsuccessful login, reason: %s\n", serverPacket->data); 
             break; 
         default:
-        printf("Random message received!\n");
+            printf("Random message received!\n");
         break;
      }
 
@@ -38,7 +38,7 @@ void loginMessageReceived(){
 }   
 
 void *receiveMessage(){
-    printf("In receive message function!\n"); 
+    printf("\nIn receive message function from server!\n"); 
     int numBytes=0;
     struct message * serverPacket = (struct message * ) malloc (sizeof (struct message));
     //serverPacket= NULL;
@@ -51,7 +51,7 @@ void *receiveMessage(){
     while(1){
         
         numBytes= read(sockfd, ( void *)serverPacket, sizeof(struct message));
-            printf("Deliver numbytes line 50: %d\n", numBytes);
+            //printf("Deliver numbytes line 50: %d\n", numBytes);
 
         printPacket(serverPacket);
 
@@ -91,27 +91,27 @@ void *receiveMessage(){
             printf("EXIT_NAK: Unsuccessful exit, reason: %s\n", serverPacket -> data);
             break;
         case 20:
-                token = strtok(packetData, ",");
-                strcpy(person, token );
-                /* walk through other tokens */
-                while( token != NULL ) {
-                    strcpy(sessionIDInvite, token);
-                    token = strtok(NULL, ",");
-                }
-                printf("%s invites %s to join session: %s\n",(char *) serverPacket -> source, person, sessionIDInvite);
-                break;
+            token = strtok(packetData, ",");
+            strcpy(person, token );
+            /* walk through other tokens */
+            while( token != NULL ) {
+                strcpy(sessionIDInvite, token);
+                token = strtok(NULL, ",");
+            }
+            printf("%s invites %s to join session: %s\n",(char *) serverPacket -> source, person, sessionIDInvite);
+            break;
         case 21:
             printf("INVITE_NAK: Unsuccessful invite, reason: %s\n", serverPacket -> data);
-        break;
+            break;
         default:
-            printf("\n\n\n----------Unknown packet received!--------\n");
+            //printf("\n\n\n----------Unknown packet received!--------\n");
             break;  
         }   
 
     }
     printf("\n");
     free(serverPacket);
-    printf("Deliver.c-Whats wrong with you>>>>???????????????\n");
+    //printf("Deliver.c-Whats wrong with you>>>>???????????????\n");
     return NULL;
 }
 
@@ -137,44 +137,28 @@ int main(int argc, char *argv[]){
     }
 
     while(!quit){
-        printf("\n\n****************************\n");
-        printf("Enter your prompts below: \n");
         char input[1000],singleWordCommands[1000];
         char fwOfCommand[15], excess[1000];
         enum clientCommands fwEnum; 
 
         fgets (input, 1000, stdin);
-        printf("input: %s\n", input);
+        // printf("input: %s\n", input);
         
         //send the message directly to server.
         //take out the first word of input to decide what to do with it
          
         sscanf(input," /%s %s", fwOfCommand, excess);
-        printf("Command: %s\n", fwOfCommand);
+        // printf("Command: %s\n", fwOfCommand);
 
-        printf("Excess: %s\n", excess);
+        // printf("Excess: %s\n", excess);
         fwEnum = convertToEnum(fwOfCommand);
-
-
-        /*
-        if(strcmp(excess, "")==0){
-            //no second work, just take input with / removed
-            ///memmove(fwOfCommand, fwOfCommand+1, strlen(fwOfCommand));
-            fwEnum = convertToEnum(fwOfCommand);
-        }else{
-            fwEnum = convertToEnum(fwOfCommand); 
-        }
-        */
-         
-        printf("enum: %d\n",fwEnum);
- 
-        
-        printf("!\n");
+        //printf("enum: %d\n",fwEnum);
+        //printf("!\n");
         
         switch(fwEnum){
             //login
             case 0:
-                printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+                //printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
                 printf("login!\n");  
 
                 char loginStr[7],clientIDStr[1000],pwStr[1000],serverIP[1000], serverPortStr[1000];
@@ -193,14 +177,13 @@ int main(int argc, char *argv[]){
                     int structureSetupSuccess = getaddrinfo(serverIP, serverPortStr, &servAddr, &servAddrPtr);
                     if (structureSetupSuccess != 0){
                         printf("Structure setup failed!\n");
-                        printf("structure setup success: %d\n",structureSetupSuccess);
                         exit(EXIT_FAILURE);
                     }
 
-                    printf("creating socket\n");
+                    //printf("creating socket\n");
                     sockfd = socket(servAddrPtr->ai_family, servAddrPtr->ai_socktype, servAddrPtr->ai_protocol);
 
-                    printf("sockfd: %d\n", sockfd); 
+                    //printf("sockfd: %d\n", sockfd); 
                     if (sockfd < 1){
                         printf("Bad socket. Exit");
                         exit(EXIT_FAILURE);
@@ -209,7 +192,7 @@ int main(int argc, char *argv[]){
                 
                     if (connect(sockfd, servAddrPtr->ai_addr, servAddrPtr->ai_addrlen) == -1) {
                         close(sockfd);
-                        perror("client: connect");
+                        //perror("client: connect");
                         exit(EXIT_FAILURE);
                     }
 
@@ -223,17 +206,18 @@ int main(int argc, char *argv[]){
                 break;
             //logout
             case 1: 
-                printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+                //printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
                 printf("logout!\n");
                 
                 packetToSend = makeLogoutPacket(clientIDStr);
                 ptrToPacketToSend = &packetToSend;
+                //iveLoggedIn = false;
                 //close socket(not actually opened at this point since no outer while loop)
                 break;
 
             //join session
             case 2: 
-                printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+                //printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
                 printf("join session!\n");
                 char joinSessionStr[13], joinSessionID[1000];
                 sscanf(input, "%s %s", joinSessionStr, joinSessionID);
@@ -246,24 +230,24 @@ int main(int argc, char *argv[]){
             //leave session
             case 3:
                 //need to specify which session you want to leave
-                printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+                //printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
                 printf("leave session!\n");
                 char leaveSession[14],leaveSessionID[1000];
                 sscanf(input, "%s %s", leaveSession, leaveSessionID);
                 packetToSend = makeLeaveSessPacket(clientIDStr, leaveSessionID);
                 ptrToPacketToSend = &packetToSend;
-                iveLoggedIn = false;
+                //iveLoggedIn = false;
 
                 break;
 
 
             //create session 
             case 4:
-                printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+                //printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
                 printf("create session!\n");
                 char createSessionStr[13],newSessID[1000];
                 sscanf(input, "%s %s", createSessionStr, newSessID);
-                printf("new session id: %s\n", newSessID);
+                //printf("new session id: %s\n", newSessID);
 
                 packetToSend = makeCreateSessPacket(clientIDStr,newSessID);
                 ptrToPacketToSend = &packetToSend;
@@ -271,7 +255,7 @@ int main(int argc, char *argv[]){
 
             //list
             case 5:
-                printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
+                //printf("This is %s() from %s, line %d\n",__FUNCTION__, __FILE__, __LINE__);
                 printf("list!\n");
                 packetToSend = makeQueryPacket(clientIDStr);
                 ptrToPacketToSend = &packetToSend;
@@ -281,11 +265,11 @@ int main(int argc, char *argv[]){
 
           //quit
             case 6:
-            quit = true;
-            printf("------Quitting--------\n");
-            packetToSend= makeQuitPacket(clientIDStr);
-            //close(sockfd);
-            break;
+                quit = true;
+                printf("------Quitting--------\n");
+                packetToSend= makeQuitPacket(clientIDStr);
+                //close(sockfd);
+                break;
 
             case 7:
                 printf("Sending invite!\n");
@@ -320,7 +304,7 @@ int main(int argc, char *argv[]){
                 printf("INVIDE PACKET: \n");
                 printPacket(ptrToPacketToSend);   
 
-            break;
+                break;
             default:
                 
                 //if loggedIn == true && currSess not empty: it's a message  
@@ -374,12 +358,12 @@ int main(int argc, char *argv[]){
             }
             else{
             //receiveMessage();
-            printf("Did I reach here yet?????\n");
+            //printf("Did I reach here yet?????\n");
             }
             printf("\n");
         }
         //if you didn't send at all, just reprompt for a valid input
-           printf("---------------1-----------------\n");
+        //printf("---------------1-----------------\n");
 
         //clear for next round 
         memset(input, 0, sizeof input);
@@ -388,7 +372,7 @@ int main(int argc, char *argv[]){
         memset(excess, 0, sizeof excess);
         message = false;
         send = true;
-        printf("---------------2-----------------\n");
+        //printf("---------------2-----------------\n");
 
     }
    

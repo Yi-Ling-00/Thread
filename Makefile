@@ -7,8 +7,8 @@ all:  ${TARGET}
 server: server.c ${DEPS}
 	gcc -o server server.c ${CFLAGS}
 
-deliver: deliver.c ${DEPS}
-	gcc -o deliver deliver.c ${CFLAGS}
+deliver: client.c ${DEPS}
+	gcc -o client client.c ${CFLAGS}
 
 clean:
 	rm -f ${TARGET}
